@@ -4,7 +4,6 @@ namespace ethaniccc\Mockingbird\utils;
 
 use ethaniccc\Mockingbird\user\User;
 use ethaniccc\Mockingbird\utils\boundingbox\AABB;
-use pocketmine\block\BlockIds;
 
 class LevelUtils{
 
@@ -12,6 +11,7 @@ class LevelUtils{
         // thank you @very nice name#6789, bounding boxes are yummy!
         $AABB = AABB::from($user);
         $AABB->minY -= 0.01;
+        $AABB->expand(0.1, 0, 0.1);
         $minX = (int) floor($AABB->minX - 1);
         $minY = (int) floor($AABB->minY - 1);
         $minZ = (int) floor($AABB->minZ - 1);

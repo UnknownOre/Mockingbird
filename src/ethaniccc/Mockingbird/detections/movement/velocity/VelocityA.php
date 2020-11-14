@@ -3,16 +3,18 @@
 namespace ethaniccc\Mockingbird\detections\movement\velocity;
 
 use ethaniccc\Mockingbird\detections\Detection;
-use ethaniccc\Mockingbird\detections\movement\MovementDetection;
+use ethaniccc\Mockingbird\detections\movement\CancellableMovement;
 use ethaniccc\Mockingbird\packets\MotionPacket;
 use ethaniccc\Mockingbird\user\User;
 use ethaniccc\Mockingbird\utils\boundingbox\AABB;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
+use stdClass;
 
-class VelocityA extends Detection implements MovementDetection{
+class VelocityA extends Detection implements CancellableMovement{
 
     private $queue = [];
+    private $blockCollidesTicks = 0;
 
     public function __construct(string $name, ?array $settings){
         parent::__construct($name, $settings);
@@ -25,7 +27,7 @@ class VelocityA extends Detection implements MovementDetection{
             if(count($this->queue) > 5){
                 return;
             }
-            $info = new \stdClass();
+            $info = new stdClass();
             $info->motion = $packet->motionY;
             $info->maxTime = (int) ($user->transactionLatency / 50) + 3;
             $info->time = 0;
@@ -43,18 +45,23 @@ class VelocityA extends Detection implements MovementDetection{
                     $notSolidBlocksAround = count($user->player->getBlocksAround());
                     $AABB = AABB::from($user);
                     $AABB->maxY += 0.1;
-                    $solidBlocksAround = count($user->player->getLevel()->getCollisionBlocks($AABB));
-                    if($user->moveDelta->y < $currentData->motion * $this->getSetting("multiplier")
-                    && $user->blockAbove === null && $notSolidBlocksAround === 0 && $solidBlocksAround === 0 && $currentData->motion >= 0.3){
+                    if($notSolidBlocksAround > 0 || $user->moveData->blockAbove->getId() === 0){
+                        $this->blockCollidesTicks = 0;
+                    } else {
+                        ++$this->blockCollidesTicks;
+                    }
+                    if($user->moveData->moveDelta->y < $currentData->motion * $this->getSetting("multiplier")
+                    && $this->blockCollidesTicks >= 5 && $currentData->motion >= 0.3 && $user->timeSinceStoppedFlight >= 20){
                         ++$currentData->failedTime;
-                        if(abs($currentData->maxFailedMotion) < abs($user->moveDelta->y)){
-                            $currentData->maxFailedMotion = $user->moveDelta->y;
+                        if(abs($currentData->maxFailedMotion) < abs($user->moveData->moveDelta->y)){
+                            $currentData->maxFailedMotion = $user->moveData->moveDelta->y;
                         }
                     }
                 } else {
                     if($currentData->failedTime >= $currentData->maxTime){
-                        if(++$this->preVL >= 10){
-                            $this->fail($user, "eD={$currentData->motion}, mYD={$currentData->maxFailedMotion}, mT={$currentData->maxTime}");
+                        if(++$this->preVL >= 5){
+                            $percentage = ($currentData->maxFailedMotion / $currentData->motion) * 100;
+                            $this->fail($user, "vertical percentage=$percentage");
                         }
                     } else {
                         $this->preVL -= $this->preVL;

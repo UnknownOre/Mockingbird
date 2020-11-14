@@ -34,20 +34,17 @@ alerts_default: true
 # When this option is enabled, every time Mockingbird is disabled, it will upload the debug log into a server so I can read for potential falses.
 upload_debug: true
 
-#  ▄████████  ▄██████▄    ▄▄▄▄███▄▄▄▄   ▀█████████▄     ▄████████     ███
-#  ███    ███ ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███   ███    ███ ▀█████████▄
-#  ███    █▀  ███    ███ ███   ███   ███   ███    ███   ███    ███    ▀███▀▀██
-#  ███        ███    ███ ███   ███   ███  ▄███▄▄▄██▀    ███    ███     ███   ▀
-#  ███        ███    ███ ███   ███   ███ ▀▀███▀▀▀██▄  ▀███████████     ███
-#  ███    █▄  ███    ███ ███   ███   ███   ███    ██▄   ███    ███     ███
-#  ███    ███ ███    ███ ███   ███   ███   ███    ███   ███    ███     ███
-#  ████████▀   ▀██████▀   ▀█   ███   █▀  ▄█████████▀    ███    █▀     ▄████▀
-
+#   _____                 _           _
+#  /  __ \               | |         | |
+# | /  \/ ___  _ __ ___ | |__   __ _| |_
+# | |    / _ \| '_ ` _ \| '_ \ / _` | __|
+# | \__/\ (_) | | | | | | |_) | (_| | |_
+# \____/\___/|_| |_| |_|_.__/ \__,_|\__|
 
 # AutoClicker
 AutoClickerA:
   enabled: true
-  punish: false
+  punish: true
   punishment_type: kick
   max_violations: 20
   # check sensitivity settings
@@ -61,6 +58,24 @@ AutoClickerB:
   max_violations: 20
   # check sensitivity settings
   max_cps: 25
+AutoClickerC:
+  enabled: true
+  punish: true
+  punishment_type: kick
+  max_violations: 20
+  # check sensitivity settings - best to not change
+  samples: 30
+  skewness: 0.035
+  kurtosis: 0.02
+  outliers: 2
+AutoClickerD:
+  enabled: true
+  punish: true
+  punishment_type: kick
+  max_violations: 20
+  # check sensitivity settings
+  duplicate_max: 3
+  samples: 10
 
 # KillAura
 KillAuraA:
@@ -76,8 +91,6 @@ KillAuraB:
 
 # Reach
 ReachA:
-  # this will only detect blatant reach. if you want to detect lower values,
-  # I recommend setting max_reach to 3.15
   enabled: true
   punish: true
   punishment_type: kick
@@ -92,15 +105,19 @@ AimA:
   punishment_type: kick
   max_violations: 20
 
-#    ▄▄▄▄███▄▄▄▄    ▄██████▄   ▄█    █▄     ▄████████   ▄▄▄▄███▄▄▄▄      ▄████████ ███▄▄▄▄       ███
-#  ▄██▀▀▀███▀▀▀██▄ ███    ███ ███    ███   ███    ███ ▄██▀▀▀███▀▀▀██▄   ███    ███ ███▀▀▀██▄ ▀█████████▄
-#  ███   ███   ███ ███    ███ ███    ███   ███    █▀  ███   ███   ███   ███    █▀  ███   ███    ▀███▀▀██
-#  ███   ███   ███ ███    ███ ███    ███  ▄███▄▄▄     ███   ███   ███  ▄███▄▄▄     ███   ███     ███   ▀
-#  ███   ███   ███ ███    ███ ███    ███ ▀▀███▀▀▀     ███   ███   ███ ▀▀███▀▀▀     ███   ███     ███
-#  ███   ███   ███ ███    ███ ███    ███   ███    █▄  ███   ███   ███   ███    █▄  ███   ███     ███
-#  ███   ███   ███ ███    ███ ███    ███   ███    ███ ███   ███   ███   ███    ███ ███   ███     ███
-#  ▀█   ███   █▀   ▀██████▀   ▀██████▀    ██████████  ▀█   ███   █▀    ██████████  ▀█   █▀     ▄████▀
+# Hitbox
+HitboxA:
+  enabled: true
+  punish: true
+  punishment_type: kick
+  max_violations: 35
 
+# ___  ___                                    _
+# |  \/  |                                   | |
+# | .  . | _____   _____ _ __ ___   ___ _ __ | |_
+# | |\/| |/ _ \ \ / / _ \ '_ ` _ \ / _ \ '_ \| __|
+# | |  | | (_) \ V /  __/ | | | | |  __/ | | | |_
+# \_|  |_/\___/ \_/ \___|_| |_| |_|\___|_| |_|\__|
 
 # Speed
 SpeedA:
@@ -118,7 +135,7 @@ SpeedB:
   suppression: false
   max_violations: 25
   # check sensitivity settings
-  max_speed_on_ground: 0.31
+  max_speed_on_ground: 0.29
   max_speed_off_ground: 0.78
 
 # Fly
@@ -158,16 +175,38 @@ VelocityB:
   punishment_type: kick
   max_violations: 30
   # check sensitivity settings
-  multiplier: 0.99
+  multiplier: 0.975
 
-#   ▄███████▄    ▄████████  ▄████████    ▄█   ▄█▄    ▄████████     ███
-#  ███    ███   ███    ███ ███    ███   ███ ▄███▀   ███    ███ ▀█████████▄
-#  ███    ███   ███    ███ ███    █▀    ███▐██▀     ███    █▀     ▀███▀▀██
-#  ███    ███   ███    ███ ███         ▄█████▀     ▄███▄▄▄         ███   ▀
-#  ▀█████████▀  ▀███████████ ███        ▀▀█████▄    ▀▀███▀▀▀         ███
-#  ███          ███    ███ ███    █▄    ███▐██▄     ███    █▄      ███
-#  ███          ███    ███ ███    ███   ███ ▀███▄   ███    ███     ███
-#  ▄████▀        ███    █▀  ████████▀    ███   ▀█▀   ██████████    ▄████▀
+#  ______ _
+#  | ___ \ |
+#  | |_/ / | __ _ _   _  ___ _ __
+#  |  __/| |/ _` | | | |/ _ \ '__|
+#  | |   | | (_| | |_| |  __/ |
+#  \_|   |_|\__,_|\__, |\___|_|
+#                 __/ |
+#                |___/
+
+NukerA:
+  enabled: true
+  punish: true
+  punishment_type: kick
+  max_violations: 10
+  # check sensitivity settings
+  max_blocks: 6
+ChestStealerA:
+  enabled: true
+  punish: true
+  punishment_type: kick
+  max_violations: 10
+  # check sensitivity settings
+  max_transactions: 4
+
+#  ______          _        _
+# | ___ \        | |      | |
+# | |_/ /_ _  ___| | _____| |_
+# |  __/ _` |/ __| |/ / _ \ __|
+# | | | (_| | (__|   <  __/ |_
+# \_|  \__,_|\___|_|\_\___|\__|
 
 # BadPackets
 BadPacketA:
@@ -197,6 +236,11 @@ TimerA:
   # this is MUCH more accurate than Mockingbird's old Timer check looking for MovePlayerPackets
   # however, this check falses when *server lag* occurs.
   enabled: true
+  punish: false
+  punishment_type: kick
+  max_violations: 20
+TimerB:
+  enabled: false
   punish: false
   punishment_type: kick
   max_violations: 20

@@ -8,7 +8,6 @@ use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
-use pocketmine\Server;
 
 class KillAuraB extends Detection{
 
@@ -18,6 +17,9 @@ class KillAuraB extends Detection{
 
     public function __construct(string $name, ?array $settings){
         parent::__construct($name, $settings);
+        $this->vlThreshold = 10;
+        $this->lowMax = 3;
+        $this->mediumMax = 4;
     }
 
     public function handle(DataPacket $packet, User $user): void{

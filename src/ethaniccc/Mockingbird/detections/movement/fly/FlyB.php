@@ -3,31 +3,32 @@
 namespace ethaniccc\Mockingbird\detections\movement\fly;
 
 use ethaniccc\Mockingbird\detections\Detection;
-use ethaniccc\Mockingbird\detections\movement\MovementDetection;
+use ethaniccc\Mockingbird\detections\movement\CancellableMovement;
 use ethaniccc\Mockingbird\user\User;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 
-class FlyB extends Detection implements MovementDetection{
+class FlyB extends Detection implements CancellableMovement{
 
     private $lastOnGround = true;
+    private $modulo = 0;
 
     public function __construct(string $name, ?array $settings){
         parent::__construct($name, $settings);
+        $this->vlThreshold = 10;
+        $this->lowMax = 2;
+        $this->mediumMax = 3;
     }
 
     public function handle(DataPacket $packet, User $user): void{
         if($packet instanceof PlayerAuthInputPacket){
-            // let ground spoof handle any bypasses for this
-            $this->lastOnGround = $user->onGround;
+            $this->modulo = fmod(round($user->moveData->location->y, 4), 1 / 64);
+            $this->lastOnGround = $this->modulo === 0.0;
         } elseif($packet instanceof PlayerActionPacket && $packet->action === PlayerActionPacket::ACTION_JUMP){
-            if(!$this->lastOnGround && !$user->onGround && !$user->player->isImmobile()){
-                if(++$this->preVL >= 2){
-                    $this->fail($user);
-                }
+            if(!$this->lastOnGround && $user->moveData->offGroundTicks > 1 && !$user->player->isImmobile() && $user->moveData->blockBelow->getId() === 0){
+                $this->fail($user, "modulo={$this->modulo} offGround={$user->moveData->offGroundTicks}");
             } else {
-                $this->preVL = 0;
                 $this->reward($user, 0.995);
             }
         }

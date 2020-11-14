@@ -3,19 +3,23 @@
 namespace ethaniccc\Mockingbird\listener;
 
 use ethaniccc\Mockingbird\detections\Detection;
+use ethaniccc\Mockingbird\detections\player\cheststeal\ChestStealerA;
 use ethaniccc\Mockingbird\Mockingbird;
+use ethaniccc\Mockingbird\packets\BlockPlacePacket;
 use ethaniccc\Mockingbird\packets\MotionPacket;
 use ethaniccc\Mockingbird\processing\Processor;
 use ethaniccc\Mockingbird\user\User;
 use ethaniccc\Mockingbird\user\UserManager;
+use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\entity\EntityMotionEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
+use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
+use pocketmine\inventory\ChestInventory;
 use pocketmine\network\mcpe\protocol\LoginPacket;
-use pocketmine\network\mcpe\protocol\NetworkStackLatencyPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
 use pocketmine\Player;
@@ -39,12 +43,22 @@ class MockingbirdListener implements Listener{
         if($user !== null){
             foreach($user->processors as $processor){
                 if($processor instanceof Processor){
+                    $start = microtime(true);
                     $processor->process($packet);
+                    $time = microtime(true) - $start;
+                    if($time > 0.01){
+                        Mockingbird::getInstance()->debugTask->addData(get_class($processor) . " took too long to process: $time");
+                    }
                 }
             }
-            foreach($user->checks as $check){
-                if($check instanceof Detection){
+            foreach($user->detections as $check){
+                if($check instanceof Detection && $check->enabled){
+                    $start = microtime(true);
                     $check->handle($packet, $user);
+                    $time = microtime(true) - $start;
+                    if($time > 0.01){
+                        Mockingbird::getInstance()->debugTask->addData(get_class($check) . " took too long to process: $time");
+                    }
                 }
             }
         }
@@ -71,10 +85,7 @@ class MockingbirdListener implements Listener{
             if($user->player->hasPermission("mockingbird.alerts") && Mockingbird::getInstance()->getConfig()->get("alerts_default")){
                 $user->alerts = true;
             }
-            $pk = new NetworkStackLatencyPacket();
-            $pk->timestamp = 1000;
-            $pk->needResponse = true;
-            $user->player->dataPacket($pk);
+            $user->player->dataPacket($user->networkStackLatencyPacket);
             $user->lastSentNetworkLatencyTime = microtime(true);
         }
     }
@@ -84,9 +95,9 @@ class MockingbirdListener implements Listener{
         if($entity instanceof Player){
             $user = UserManager::getInstance()->get($entity);
             $user->timeSinceMotion -= $user->timeSinceMotion > 0 ? $user->timeSinceMotion : 3;
-            $user->currentMotion = $event->getVector();
+            $user->moveData->lastMotion = $event->getVector();
             $motionPK = new MotionPacket($event);
-            foreach($user->checks as $check){
+            foreach($user->detections as $check){
                 if($check instanceof Detection){
                     $check->handle($motionPK, $user);
                 }
@@ -100,6 +111,39 @@ class MockingbirdListener implements Listener{
             $user = UserManager::getInstance()->get($entity);
             if($user !== null){
                 $user->timeSinceTeleport = 0;
+            }
+        }
+    }
+
+    public function onPlacedBlock(BlockPlaceEvent $event) : void{
+        $user = UserManager::getInstance()->get($event->getPlayer());
+        if($user !== null){
+            $pk = new BlockPlacePacket($event);
+            foreach($user->processors as $processor){
+                if($processor instanceof Processor){
+                    $processor->process($pk);
+                }
+            }
+            foreach($user->detections as $check){
+                if($check instanceof Detection){
+                    $check->handle($pk, $user);
+                }
+            }
+        }
+    }
+
+    // I hate it here
+    public function onTransaction(InventoryTransactionEvent $event) : void{
+        $user = UserManager::getInstance()->get($event->getTransaction()->getSource());
+        $check = $user->detections["ChestStealerA"] ?? null;
+        if($check instanceof ChestStealerA){
+            foreach($event->getTransaction()->getInventories() as $inventory){
+                if($inventory instanceof ChestInventory){
+                    $continue = true;
+                }
+            }
+            if(isset($continue)){
+                ++$check->transactions;
             }
         }
     }

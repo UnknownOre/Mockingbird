@@ -6,14 +6,16 @@ use ethaniccc\Mockingbird\user\User;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
-use pocketmine\network\mcpe\protocol\NetworkStackLatencyPacket;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 
 class ClickProcessor extends Processor{
 
     private $clicks = [];
-    private $ticks = 0;
     private $lastTime;
+    private $ticks = 0;
+    private $tickSpeed = 0;
+
+    public const MAX_SAMPLE_SIZE = 150;
 
     public function __construct(User $user){
         parent::__construct($user);
@@ -28,11 +30,29 @@ class ClickProcessor extends Processor{
             $this->clicks = array_filter($this->clicks, function(int $t) use ($currentTick) : bool{
                return $currentTick - $t <= 20;
             });
-            $user->cps = count($this->clicks);
-            $user->clickTime = microtime(true) - $this->lastTime;
+            $user->clickData->cps = count($this->clicks);
+            $clickTime = microtime(true) - $this->lastTime;
+            $user->clickData->timeSpeed = $clickTime;
             $this->lastTime = microtime(true);
+
+            $user->clickData->tickSpeed = $this->tickSpeed;
+
+            if($user->clickData->tickSpeed <= 4){
+                if(count($user->clickData->tickSamples) === self::MAX_SAMPLE_SIZE){
+                    array_shift($user->clickData->tickSamples);
+                }
+                $user->clickData->tickSamples[] = $user->clickData->tickSpeed;
+            }
+            if($clickTime < 0.2){
+                if(count($user->clickData->timeSamples) === self::MAX_SAMPLE_SIZE){
+                    array_shift($user->clickData->timeSamples);
+                }
+                $user->clickData->timeSamples[] = $clickTime;
+            }
+            $this->tickSpeed = 0;
         } elseif($packet instanceof PlayerAuthInputPacket){
             ++$this->ticks;
+            ++$this->tickSpeed;
         }
     }
 
